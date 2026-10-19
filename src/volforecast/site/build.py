@@ -22,7 +22,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.offline import get_plotlyjs
 
 from volforecast.calendar import TradingCalendar
-from volforecast.config import TICKERS, TRADING_DAYS_PER_YEAR
+from volforecast.config import OOS_START, STUDY_END, TICKERS, TRADING_DAYS_PER_YEAR
 from volforecast.evaluate import BASELINE, loss_table, var_table
 from volforecast.store import (
     NUMERIC_FORECAST,
@@ -225,6 +225,20 @@ def scoreboard(joined_frame: pd.DataFrame, tickers: list[str]) -> list[dict[str,
     return sections
 
 
+OOS_LABEL = "Out-of-sample (2022 on)"
+STUDY_LABEL = "Study period (to 2021)"
+
+
+def backtest_sections(bt: pd.DataFrame) -> list[dict[str, Any]]:
+    """The backtest reported by period, out-of-sample first (§13): the study period was used
+    for modeling choices, so only the out-of-sample table is a clean test."""
+    if bt.empty:
+        return []
+    oos = bt[bt["target_date"] >= OOS_START.isoformat()].assign(ticker=OOS_LABEL)
+    study = bt[bt["target_date"] <= STUDY_END.isoformat()].assign(ticker=STUDY_LABEL)
+    return scoreboard(pd.concat([oos, study], ignore_index=True), [OOS_LABEL, STUDY_LABEL])
+
+
 # --- charts -------------------------------------------------------------------------------------
 def _chart_html(fig: go.Figure, series: list[str]) -> str:
     fig.update_layout(
@@ -366,7 +380,7 @@ def build_site(
         "backtest.html": env.get_template("backtest.html").render(
             page="backtest",
             label=BACKTEST_LABEL,
-            sections=scoreboard(bt, ["SPX"]) if not bt.empty else [],
+            sections=backtest_sections(bt),
             rolling=rolling_qlike_chart(bt, "S&P 500 index backtest") if not bt.empty else None,
             short_history=data.short_history.to_dict("records"),
             **common,

@@ -97,3 +97,16 @@ def test_loss_table_labels() -> None:
     assert table.loc["garch_t_sh", "best"]
     assert not table.loc["rw", "best"]
     assert not table["early"].any()
+
+
+def test_mcs_handles_models_with_identical_losses() -> None:
+    # garch_t and garch_t_fhs share one variance forecast, so their losses are identical.
+    rng = np.random.default_rng(4)
+    base = rng.gamma(2.0, 0.1, 300)
+    losses = pd.DataFrame(
+        {"garch_t": base * 0.8, "garch_t_fhs": base * 0.8, "ewma_094": base, "rw": base * 3}
+    )
+    out = ev.model_confidence_set(losses).set_index("model")
+    assert out.loc["garch_t", "in_mcs"] == out.loc["garch_t_fhs", "in_mcs"]
+    assert out.loc["garch_t", "in_mcs"]
+    assert not out.loc["rw", "in_mcs"]

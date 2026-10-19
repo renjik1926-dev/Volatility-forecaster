@@ -135,21 +135,41 @@ def benjamini_hochberg(pvalues: Sequence[float]) -> list[float]:
 def model_confidence_set(
     losses: pd.DataFrame, size: float = 0.10, reps: int = 1000, seed: int = SEED
 ) -> pd.DataFrame:
-    """Columns: model, mcs_pvalue, in_mcs. `losses` has one column per model, aligned rows."""
-    clean = losses.dropna()
+    """Columns: model, mcs_pvalue, in_mcs. `losses` has one column per model, aligned rows.
+
+    Never raises: if the MCS can't be computed, every model gets NaN / NA ("–" on the site).
+    """
+    empty = pd.DataFrame({"model": list(losses.columns), "mcs_pvalue": math.nan, "in_mcs": pd.NA})
+    clean = losses.replace([np.inf, -np.inf], np.nan).dropna()
     if clean.shape[0] < 30 or clean.shape[1] < 2:
-        return pd.DataFrame(
-            {"model": list(losses.columns), "mcs_pvalue": math.nan, "in_mcs": pd.NA}
+        return empty
+    # Models with identical losses (garch_t and garch_t_fhs share one variance forecast) make
+    # the MCS's pairwise statistics divide by zero. Test one model of each identical group and
+    # give the others the same result.
+    representative: dict[str, str] = {}
+    unique: list[str] = []
+    for col in clean.columns:
+        values = clean[col].to_numpy()
+        match = next((u for u in unique if np.array_equal(values, clean[u].to_numpy())), None)
+        if match is None:
+            unique.append(col)
+        representative[col] = match or col
+    if len(unique) < 2:
+        return empty
+    try:
+        mcs = MCS(
+            clean[unique], size=size, reps=reps, block_size=block_size(clean.shape[0]), seed=seed
         )
-    mcs = MCS(clean, size=size, reps=reps, block_size=block_size(clean.shape[0]), seed=seed)
-    mcs.compute()
+        mcs.compute()
+    except (ValueError, IndexError, ZeroDivisionError, np.linalg.LinAlgError):
+        return empty
     pvals = mcs.pvalues.iloc[:, 0]
     included = set(mcs.included)
     return pd.DataFrame(
         {
             "model": list(clean.columns),
-            "mcs_pvalue": [float(pvals.get(c, math.nan)) for c in clean.columns],
-            "in_mcs": [c in included for c in clean.columns],
+            "mcs_pvalue": [float(pvals.get(representative[c], math.nan)) for c in clean.columns],
+            "in_mcs": [representative[c] in included for c in clean.columns],
         }
     )
 
