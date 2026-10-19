@@ -1,0 +1,302 @@
+{
+ "160": {
+  "egarch_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "ensemble": {
+   "fit_status": "ok",
+   "var95": 0.018637735404556856,
+   "var99": 0.02635970485451939,
+   "variance": 0.00012839016888989947,
+   "version": 1
+  },
+  "ewma_094": {
+   "fit_status": "ok",
+   "var95": 0.02205381030647284,
+   "var99": 0.031191124778713646,
+   "variance": 0.00017976815278929005,
+   "version": 1
+  },
+  "garch_n": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t_fhs": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t_sh": {
+   "fit_status": "ok",
+   "var95": 0.018551023823830764,
+   "var99": 0.028979414899679774,
+   "variance": 0.00013296265956411785,
+   "version": 1
+  },
+  "gjr_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "har_log": {
+   "fit_status": "ok",
+   "var95": 0.01830284428163361,
+   "var99": 0.025886061948498903,
+   "variance": 0.0001238176782156811,
+   "version": 1
+  },
+  "hist21": {
+   "fit_status": "ok",
+   "var95": 0.02377210465313813,
+   "var99": 0.033621341264146315,
+   "variance": 0.00020887225403248776,
+   "version": 1
+  },
+  "rw": {
+   "fit_status": "ok",
+   "var95": 0.01986394901662712,
+   "var99": 0.028093962166427764,
+   "variance": 0.00014584000487513385,
+   "version": 1
+  },
+  "vix": {
+   "fit_status": "ok",
+   "var95": 0.02462256089765358,
+   "var99": 0.0348241577603838,
+   "variance": 0.00022408455655773717,
+   "version": 1
+  },
+  "vix_mz": {
+   "fit_status": "ok",
+   "var95": 0.021327681424905938,
+   "var99": 0.0301641468444864,
+   "variance": 0.00016812518544979783,
+   "version": 1
+  },
+  "yz21": {
+   "fit_status": "ok",
+   "var95": 0.024284758701181512,
+   "var99": 0.034346397667489946,
+   "variance": 0.00021797820481570923,
+   "version": 1
+  }
+ },
+ "60": {
+  "egarch_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "ensemble": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "ewma_094": {
+   "fit_status": "ok",
+   "var95": 0.011277393287220642,
+   "var99": 0.015949832537422614,
+   "variance": 4.700704369103219e-05,
+   "version": 1
+  },
+  "garch_n": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t_fhs": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "garch_t_sh": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "gjr_t": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "har_log": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "hist21": {
+   "fit_status": "ok",
+   "var95": 0.009938819048835201,
+   "var99": 0.014056661447490928,
+   "variance": 3.651027076869338e-05,
+   "version": 1
+  },
+  "rw": {
+   "fit_status": "ok",
+   "var95": 0.013348416427223923,
+   "var99": 0.018878920086547228,
+   "variance": 6.585746048353725e-05,
+   "version": 1
+  },
+  "vix": {
+   "fit_status": "ok",
+   "var95": 0.014972072973991566,
+   "var99": 0.021175288525571156,
+   "variance": 8.2853213390164e-05,
+   "version": 1
+  },
+  "vix_mz": {
+   "fit_status": "warming_up",
+   "var95": null,
+   "var99": null,
+   "variance": null,
+   "version": 1
+  },
+  "yz21": {
+   "fit_status": "ok",
+   "var95": 0.010140628367263371,
+   "var99": 0.014342084217757192,
+   "variance": 3.8008017770806114e-05,
+   "version": 1
+  }
+ },
+ "620": {
+  "egarch_t": {
+   "fit_status": "ok",
+   "var95": 0.01114938206125535,
+   "var99": 0.017846011192743524,
+   "variance": 4.893574850368415e-05,
+   "version": 1
+  },
+  "ensemble": {
+   "fit_status": "ok",
+   "var95": 0.011341953646660881,
+   "var99": 0.01604114148581182,
+   "variance": 4.75467922454841e-05,
+   "version": 1
+  },
+  "ewma_094": {
+   "fit_status": "ok",
+   "var95": 0.010061793774932022,
+   "var99": 0.014230586949388814,
+   "variance": 3.741935610607662e-05,
+   "version": 1
+  },
+  "garch_n": {
+   "fit_status": "ok",
+   "var95": 0.011417519747850853,
+   "var99": 0.01614801606478494,
+   "variance": 4.818246662985106e-05,
+   "version": 1
+  },
+  "garch_t": {
+   "fit_status": "ok",
+   "var95": 0.011442893644947692,
+   "var99": 0.0180841680292056,
+   "variance": 5.10213580584626e-05,
+   "version": 1
+  },
+  "garch_t_fhs": {
+   "fit_status": "ok",
+   "var95": 0.01123873362944264,
+   "var99": 0.018770245888180298,
+   "variance": 5.10213580584626e-05,
+   "version": 1
+  },
+  "garch_t_sh": {
+   "fit_status": "ok",
+   "var95": 0.011487597739502399,
+   "var99": 0.018168141868682815,
+   "variance": 5.1449751570373815e-05,
+   "version": 1
+  },
+  "gjr_t": {
+   "fit_status": "ok",
+   "var95": 0.011106651417262532,
+   "var99": 0.01756795788064523,
+   "variance": 4.809887351455805e-05,
+   "version": 1
+  },
+  "har_log": {
+   "fit_status": "ok",
+   "var95": 0.010085052882022508,
+   "var99": 0.014263482748410349,
+   "variance": 3.759255519597493e-05,
+   "version": 1
+  },
+  "hist21": {
+   "fit_status": "ok",
+   "var95": 0.009457813428046575,
+   "var99": 0.013376366018774137,
+   "variance": 3.3061836321400134e-05,
+   "version": 1
+  },
+  "rw": {
+   "fit_status": "ok",
+   "var95": 0.0033803561677362964,
+   "var99": 0.00478090223680808,
+   "variance": 4.223479687031426e-06,
+   "version": 1
+  },
+  "vix": {
+   "fit_status": "ok",
+   "var95": 0.013498579593542184,
+   "var99": 0.0190912987182989,
+   "variance": 6.734752338476678e-05,
+   "version": 1
+  },
+  "vix_mz": {
+   "fit_status": "ok",
+   "var95": 0.01126165770369027,
+   "var99": 0.015927577401346756,
+   "variance": 4.687595538083487e-05,
+   "version": 1
+  },
+  "yz21": {
+   "fit_status": "ok",
+   "var95": 0.009220084150155369,
+   "var99": 0.013040140964363392,
+   "variance": 3.1420656580941506e-05,
+   "version": 1
+  }
+ }
+}

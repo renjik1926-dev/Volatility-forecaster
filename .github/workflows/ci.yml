@@ -1,0 +1,65 @@
+# Lint, types, fast tests, privacy scan on fixture outputs, actionlint, pip-audit (§17).
+# Runs on main and on PRs into main only; never on the bot's forecasts branch.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run --no-sync ruff check .
+
+      - name: Format
+        run: uv run --no-sync ruff format --check .
+
+      - name: Types
+        run: uv run --no-sync mypy
+
+      - name: Tests (fast)
+        run: uv run --no-sync pytest
+
+      - name: Privacy scan on outputs generated from fixtures
+        env:
+          VOLFORECAST_PUBLIC_DIR: ${{ runner.temp }}/data
+          VOLFORECAST_PRIVATE_DIR: ${{ runner.temp }}/private
+          VOLFORECAST_SITE_DIR: ${{ runner.temp }}/site
+        run: |
+          uv run --no-sync volforecast run-daily --recorded tests/fixtures \
+            --now 2026-10-16T23:37:00+00:00 --no-proofs
+          uv run --no-sync volforecast privacy-check "$VOLFORECAST_PUBLIC_DIR" "$VOLFORECAST_SITE_DIR"
+
+      - name: Audit dependencies
+        run: uv run --no-sync pip-audit --skip-editable --strict
+
+  actionlint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: actionlint
+        run: docker run --rm -v "$PWD:/repo" --workdir /repo rhysd/actionlint:1.7.12 -color

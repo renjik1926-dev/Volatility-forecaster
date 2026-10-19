@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Backtest · Volatility Forecaster{% endblock %}
+{% block content %}
+<h1>Historical backtest</h1>
+<p class="lede"><strong>{{ label }}.</strong> This is a walk-forward backtest, not the live record; the live scoreboard is the headline result. Squared returns are the volatility proxy here, because the index series has closing values only. The study period (through 2021) was used for modeling choices; the out-of-sample period (2022 on) was scored once after every choice was frozen.</p>
+{% if not sections %}
+<p>The backtest hasn't been published yet.</p>
+{% endif %}
+{% for s in sections %}
+<section class="ticker">
+  <h2>{{ s.ticker }} ({{ s.n }} sessions)</h2>
+  <table>
+    <thead><tr><th scope="col">Model</th><th scope="col">n</th><th scope="col">Mean QLIKE [95% CI]</th><th scope="col">Skill vs EWMA [95% CI]</th><th scope="col">DM p</th><th scope="col">DM p (BH)</th><th scope="col">In MCS</th><th scope="col">Label</th></tr></thead>
+    <tbody>
+    {% for r in s.loss %}<tr><td>{{ r.model }}</td><td class="n">{{ r.n }}</td><td class="n">{{ r.qlike }}</td><td class="n">{{ r.skill }}</td><td class="n">{{ r.dm_p }}</td><td class="n">{{ r.dm_p_bh }}</td><td>{{ r.in_mcs }}</td><td>{{ r.label }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th scope="col">Model</th><th scope="col">n</th><th scope="col">95% rate (count)</th><th scope="col">Kupiec p</th><th scope="col">Christoffersen CC p</th><th scope="col">99% rate (count)</th><th scope="col">Kupiec p</th><th scope="col">Christoffersen CC p</th><th scope="col">Traffic light (99%, last 250)</th></tr></thead>
+    <tbody>
+    {% for r in s.var %}<tr><td>{{ r.model }}</td><td class="n">{{ r.n }}</td><td class="n">{{ r.rate95 }}</td><td class="n">{{ r.kupiec95 }}</td><td class="n">{{ r.cc95 }}</td><td class="n">{{ r.rate99 }}</td><td class="n">{{ r.kupiec99 }}</td><td class="n">{{ r.cc99 }}</td><td><span class="light {{ r.light_class }}">{{ r.light }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+{% if rolling %}<figure class="chart">{{ rolling | safe }}</figure>{% endif %}
+{% if short_history %}
+<section>
+  <h2>How much history does GARCH need?</h2>
+  <p>Each model is fitted on only the last <em>window</em> sessions. Same index data and label as above.</p>
+  <table>
+    <thead><tr><th scope="col">Window</th><th scope="col">Period</th><th scope="col">Model</th><th scope="col">n</th><th scope="col">Mean QLIKE</th><th scope="col">95% rate</th><th scope="col">99% rate</th></tr></thead>
+    <tbody>
+    {% for r in short_history %}<tr><td class="n">{{ r.window }}</td><td>{{ r.period }}</td><td>{{ r.model }}</td><td class="n">{{ r.n }}</td><td class="n">{{ r.mean_qlike }}</td><td class="n">{{ r.rate95 }}</td><td class="n">{{ r.rate99 }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Volatility Forecaster{% endblock %}</title>
+<meta name="description" content="Next-session volatility and 1-day VaR forecasts for five ETFs, published before the open and scored in public.">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/plotly.min.js"></script>
+</head>
+<body>
+<header class="masthead">
+  <p class="site-name"><a href="index.html">Volatility Forecaster</a></p>
+  <nav aria-label="Pages">
+    <a href="index.html"{% if page == "today" %} aria-current="page"{% endif %}>Today</a>
+    <a href="scoreboard.html"{% if page == "scoreboard" %} aria-current="page"{% endif %}>Scoreboard</a>
+    <a href="backtest.html"{% if page == "backtest" %} aria-current="page"{% endif %}>Backtest</a>
+    <a href="methodology.html"{% if page == "methodology" %} aria-current="page"{% endif %}>Methodology</a>
+  </nav>
+</header>
+{% if status.stale %}
+<div class="banner stale" role="status"><strong>Stale:</strong> the latest forecast (made after the close of {{ status.latest_forecast_made }}) is more than one trading session old.</div>
+{% endif %}
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>
+  <p><strong>Research project, not investment advice.</strong> These are statistical forecasts of volatility. They say nothing about price direction and are not a recommendation to buy or sell anything.</p>
+  <p>Last successful run: {{ status.last_updated }} UTC. Page built {{ status.built_utc }} UTC. Late forecasts: {{ status.late }}. Fit fallbacks: {{ status.fallbacks }}. Failed fits: {{ status.failed }}. Missed sessions: {{ status.gaps }}.</p>
+  <p>Data: daily prices from Alpha Vantage (not republished). VIX: Chicago Board Options Exchange, CBOE Volatility Index: VIX [VIXCLS], retrieved from FRED, Federal Reserve Bank of St. Louis. Only derived statistics are shown.</p>
+</footer>
+</body>
+</html>

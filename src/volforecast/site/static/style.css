@@ -1,0 +1,83 @@
+:root {
+  --ink: #1d1d1b;
+  --muted: #5b5b57;
+  --rule: #d6d3cc;
+  --paper: #fbfaf7;
+  --accent: #1f3a5f;
+  --amber-bg: #fff3d6;
+  --amber-ink: #6b4a00;
+  --green: #2f6b3a;
+  --yellow: #8a6d00;
+  --red: #9b2c2c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8e6e1;
+    --muted: #a9a69f;
+    --rule: #3a3936;
+    --paper: #161614;
+    --accent: #9cb8dc;
+    --amber-bg: #3d3110;
+    --amber-ink: #f3d999;
+    --green: #8fcf9a;
+    --yellow: #e6cf6b;
+    --red: #f0a0a0;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0 auto;
+  max-width: 1040px;
+  padding: 0 16px 48px;
+  color: var(--ink);
+  background: var(--paper);
+  font: 17px/1.55 Georgia, "Iowan Old Style", "Times New Roman", serif;
+}
+a { color: var(--accent); }
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  padding: 20px 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.site-name { margin: 0; font-size: 1.35rem; font-weight: bold; }
+.site-name a { color: var(--ink); text-decoration: none; }
+nav a { margin-right: 16px; text-decoration: none; }
+nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 4px; }
+h1 { font-size: 1.9rem; margin: 28px 0 8px; }
+h2 { font-size: 1.35rem; margin: 32px 0 8px; border-top: 1px solid var(--rule); padding-top: 16px; }
+h3 { font-size: 1.05rem; margin: 20px 0 6px; }
+.lede { color: var(--muted); max-width: 72ch; }
+.note { color: var(--muted); font-size: 0.92rem; }
+.banner { margin: 16px 0 0; padding: 10px 14px; }
+.banner.stale { background: var(--amber-bg); color: var(--amber-ink); border-left: 4px solid var(--amber-ink); }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0 12px;
+  font: 0.88rem/1.4 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: block;
+  overflow-x: auto;
+}
+th, td {
+  padding: 5px 12px 5px 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+th { font-weight: 600; border-bottom: 1px solid var(--ink); }
+td.n { font-variant-numeric: tabular-nums; text-align: right; }
+.light.green { color: var(--green); font-weight: 600; }
+.light.yellow { color: var(--yellow); font-weight: 600; }
+.light.red { color: var(--red); font-weight: 600; }
+figure.chart { margin: 16px 0; }
+footer { margin-top: 48px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  h1 { font-size: 1.5rem; }
+}

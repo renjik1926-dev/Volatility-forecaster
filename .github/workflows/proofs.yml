@@ -1,0 +1,52 @@
+# Weekly OpenTimestamps upgrades (§14): complete pending proofs once they are anchored in
+# Bitcoin, commit them to the forecasts branch, then check every forecast row is covered.
+name: proofs
+
+on:
+  schedule:
+    - cron: "53 7 * * 0"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: forecasts-branch
+  cancel-in-progress: false
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: forecasts
+          path: forecasts
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --frozen --no-dev --extra proofs
+
+      - name: Upgrade pending proofs
+        env:
+          VOLFORECAST_PUBLIC_DIR: forecasts/data
+        run: uv run --no-sync volforecast upgrade-proofs
+
+      - name: Commit completed proofs
+        working-directory: forecasts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/proofs
+          if ! git diff --cached --quiet; then
+            git commit -m "proofs: upgrade $(date -u +%Y-%m-%d)"
+            git push origin HEAD:forecasts
+          fi
+
+      - name: Verify every forecast is covered by a stamped file
+        env:
+          VOLFORECAST_PUBLIC_DIR: forecasts/data
+        run: uv run --no-sync volforecast verify-proofs

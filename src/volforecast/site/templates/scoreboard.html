@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Scoreboard · Volatility Forecaster{% endblock %}
+{% block content %}
+<h1>Live scoreboard</h1>
+<p class="lede">Only forecasts committed before the target session's open are counted. QLIKE is the primary loss (lower is better); skill is the improvement over the RiskMetrics EWMA baseline. Intervals are 95% stationary-bootstrap intervals. Diebold–Mariano p-values are one-sided (model better than EWMA) and adjusted for multiple testing with Benjamini–Hochberg. A model is labeled “best” only if it is in the Model Confidence Set and beats EWMA after adjustment.</p>
+{% for s in sections %}
+<section class="ticker">
+  <h2>{{ s.ticker }}</h2>
+  {% if not s.loss %}
+  <p>No scored forecasts yet.</p>
+  {% else %}
+  <p class="note">{{ s.n }} scored sessions.{% if s.n < 60 %} Early: fewer than 60 live sessions, so differences between models can't be concluded yet.{% endif %}</p>
+  <h3>Volatility accuracy</h3>
+  <table>
+    <thead><tr><th scope="col">Model</th><th scope="col">n</th><th scope="col">Mean QLIKE [95% CI]</th><th scope="col">Skill vs EWMA [95% CI]</th><th scope="col">DM p</th><th scope="col">DM p (BH)</th><th scope="col">In MCS</th><th scope="col">Label</th></tr></thead>
+    <tbody>
+    {% for r in s.loss %}<tr><td>{{ r.model }}</td><td class="n">{{ r.n }}</td><td class="n">{{ r.qlike }}</td><td class="n">{{ r.skill }}</td><td class="n">{{ r.dm_p }}</td><td class="n">{{ r.dm_p_bh }}</td><td>{{ r.in_mcs }}</td><td>{{ r.label }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h3>VaR calibration</h3>
+  <table>
+    <thead><tr><th scope="col">Model</th><th scope="col">n</th><th scope="col">95% rate (count)</th><th scope="col">Binomial p</th><th scope="col">Kupiec p</th><th scope="col">Christoffersen CC p</th><th scope="col">99% rate (count)</th><th scope="col">Binomial p</th><th scope="col">Kupiec p</th><th scope="col">Christoffersen CC p</th><th scope="col">Traffic light (99%, last 250)</th><th scope="col">Power</th></tr></thead>
+    <tbody>
+    {% for r in s.var %}<tr><td>{{ r.model }}</td><td class="n">{{ r.n }}</td><td class="n">{{ r.rate95 }}</td><td class="n">{{ r.binom95 }}</td><td class="n">{{ r.kupiec95 }}</td><td class="n">{{ r.cc95 }}</td><td class="n">{{ r.rate99 }}</td><td class="n">{{ r.binom99 }}</td><td class="n">{{ r.kupiec99 }}</td><td class="n">{{ r.cc99 }}</td><td><span class="light {{ r.light_class }}">{{ r.light }}</span></td><td>{{ r.low_power }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="note">Expected violation rates are 5% and 1%. “Low power” means fewer than 10 violations are expected so far (200 sessions at 95%, 1,000 at 99%).</p>
+  {% endif %}
+</section>
+{% endfor %}
+{% if charts or rolling %}
+<section>
+  <h2>Charts</h2>
+  {% for c in charts %}<figure class="chart">{{ c | safe }}</figure>{% endfor %}
+  {% for c in rolling %}<figure class="chart">{{ c | safe }}</figure>{% endfor %}
+</section>
+{% endif %}
+{% endblock %}

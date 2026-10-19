@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Methodology · Volatility Forecaster{% endblock %}
+{% block content %}
+<h1>Methodology</h1>
+<p class="lede">Each trading evening the bot forecasts the variance of the next session's close-to-close log return for SPY, QQQ, IWM, TLT and GLD, plus the 1-day Value-at-Risk at 95% and 99%. Forecasts are committed to an append-only branch before the next open, stamped with an OpenTimestamps proof, and scored the following evening.</p>
+<h2>What is scored</h2>
+<p>Returns are log returns from unadjusted prices plus dividend and split records. The “what actually happened” proxy is the squared overnight return plus the Rogers–Satchell intraday variance; squared returns and a Garman–Klass version are robustness checks. The primary loss is QLIKE, which keeps model rankings valid when the proxy is noisy (Patton, 2011).</p>
+<h2>Models</h2>
+<p>Baselines: random walk, 21-day mean proxy, 21-day Yang–Zhang, and RiskMetrics EWMA (λ = 0.94). Statistical models: GARCH(1,1) with normal and Student-t errors, GJR-GARCH, EGARCH, a short-history GARCH that shrinks toward typical parameter values (penalized likelihood), and HAR on log proxies. An equal-weight ensemble averages the statistical models that forecast that evening. For SPY, the VIX and a recalibrated VIX are compared too. All models use a zero daily mean.</p>
+<h2>VaR</h2>
+<p>VaR = −√h · q, where q is the quantile of the model's standardized distribution: normal, unit-variance Student-t, or, for one GARCH variant, the empirical quantile of past standardized residuals (filtered historical simulation). A violation is a return below −VaR. Violation flags are published; returns are not.</p>
+<h2>Honesty rules</h2>
+<ul>
+  <li>No forecast uses information from after its forecast time; the backtest calls the same code as the live job.</li>
+  <li>Forecasts are never edited. Late forecasts are kept but excluded from the live record.</li>
+  <li>Every statistic shows its sample size. Comparisons are “early” before 60 live sessions; VaR tests are “low power” until 10 violations are expected.</li>
+  <li>Model versions are fixed. Any change that could alter outputs starts a new version with its own record.</li>
+</ul>
+<h2>Data and licensing</h2>
+<p>Prices: Alpha Vantage (free tier, non-commercial use). Raw prices, volumes and returns are never published; they stay in a private repository. VIX: Cboe, via FRED. S&amp;P 500 index (backtest only): S&amp;P Dow Jones Indices, via FRED. Only derived statistics appear here.</p>
+{% endblock %}

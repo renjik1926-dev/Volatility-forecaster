@@ -1,0 +1,80 @@
+[project]
+name = "volforecast"
+version = "0.1.0.dev0"
+description = "Daily next-session volatility and 1-day VaR forecasts for five ETFs, committed before the open and scored in public."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "volforecast contributors" }]
+dependencies = [
+    "arch>=7.0",
+    "exchange-calendars>=4.5",
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "plotly>=5.22",
+    "pyarrow>=17",
+    "scipy>=1.13",
+    "statsmodels>=0.14",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# The `ots` command used for timestamp proofs. Installed in the daily and proofs workflows.
+proofs = ["opentimestamps-client>=0.7"]
+
+[project.scripts]
+volforecast = "volforecast.cli:app"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.100",
+    "mypy>=1.10",
+    "pip-audit>=2.7",
+    "pytest>=8.2",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/volforecast"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "NPY", "RUF"]
+ignore = [
+    "RUF001", # Greek letters in strings are intentional (σ, α, ν)
+    "RUF002",
+    "RUF003",
+]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["volforecast"]
+mypy_path = "src"
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["arch.*", "exchange_calendars.*", "plotly.*", "statsmodels.*", "scipy.*", "pandas.*", "pyarrow.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not slow'"
+markers = [
+    "slow: simulation tests run by nightly.yml (pytest -m slow)",
+]
+filterwarnings = [
+    "error::DeprecationWarning:volforecast.*",
+]

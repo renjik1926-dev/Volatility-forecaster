@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Today · Volatility Forecaster{% endblock %}
+{% block content %}
+<h1>Next-session forecasts</h1>
+{% if not today.made %}
+<p>No forecasts yet. The first evening run will publish them.</p>
+{% else %}
+<p class="lede">Made after the close of <strong>{{ today.made }}</strong> for the session of <strong>{{ today.target }}</strong>. Volatility is annualized (√252). VaR is the 1-day loss, as a percentage of value, that should be exceeded on 5% (VaR 95) or 1% (VaR 99) of sessions.</p>
+{% for t in today.tickers %}
+<section class="ticker">
+  <h2>{{ t.ticker }}</h2>
+  {% if t.consensus %}<p>Consensus ({{ t.consensus.model }}): <strong>{{ t.consensus.vol }}</strong> annualized volatility.</p>{% endif %}
+  <table>
+    <thead><tr><th scope="col">Model</th><th scope="col">Volatility</th><th scope="col">VaR 95</th><th scope="col">VaR 99</th><th scope="col">Distribution</th><th scope="col">Fit</th></tr></thead>
+    <tbody>
+    {% for r in t.rows %}
+      <tr><td>{{ r.model }}</td><td class="n">{{ r.vol }}</td><td class="n">{{ r.var95 }}</td><td class="n">{{ r.var99 }}</td><td>{{ r.dist }}</td><td>{{ r.status }}{% if r.status == "fallback" %} (reused last good parameters){% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if t.waiting %}
+  <p class="note">Waiting: {% for w in t.waiting %}{{ w.model }} ({{ w.notes or w.status }}){% if not loop.last %}; {% endif %}{% endfor %}.</p>
+  {% endif %}
+</section>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,73 @@
+# Manual: run the S&P 500 index backtest on the private snapshot and publish derived results
+# (§13). Only this workflow publishes backtest results, so each comes with a run log and a
+# known code version. Run with "tune" first (study period only), freeze the prior strength,
+# then run once without "tune" to score the out-of-sample period.
+name: backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      tune:
+        description: "Only tune the garch_t_sh prior on the study period"
+        type: boolean
+        default: true
+      prior_sessions:
+        description: "Frozen garch_t_sh prior strength (leave empty for the default)"
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: forecasts-branch
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: forecasts
+          path: forecasts
+      - name: Check out the private snapshot (read-only key)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/volforecast-data
+          ssh-key: ${{ secrets.DATA_REPO_READ_KEY }}
+          path: data-private
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uv sync --frozen --no-dev
+
+      - name: Run the backtest
+        env:
+          VOLFORECAST_PUBLIC_DIR: forecasts/data
+          VOLFORECAST_PRIVATE_DIR: data-private
+          TUNE: ${{ inputs.tune }}
+          PRIOR: ${{ inputs.prior_sessions }}
+        run: |
+          args=()
+          if [ "$TUNE" = "true" ]; then args+=(--tune); fi
+          if [ -n "$PRIOR" ]; then args+=(--prior-sessions "$PRIOR"); fi
+          uv run --no-sync volforecast backtest "${args[@]}"
+
+      - name: Privacy check (pre-publish)
+        run: uv run --no-sync volforecast privacy-check forecasts/data/backtest
+
+      - name: Commit results to the forecasts branch
+        working-directory: forecasts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/backtest
+          if ! git diff --cached --quiet; then
+            git commit -m "backtest: $(date -u +%Y-%m-%dT%H:%MZ) (${GITHUB_SHA::7})"
+            git push origin HEAD:forecasts
+          fi

@@ -1,0 +1,26 @@
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+dist/
+
+# Generated site (root only; src/volforecast/site/ is source code)
+/site/
+
+# Raw provider data must never be committed to this repo (it lives in the private data repo)
+*.parquet
+/data-private/
+
+# Demo output from scripts/demo_site.py
+/demo/
+
+# Public outputs live on the `forecasts` branch, never on main
+/data/

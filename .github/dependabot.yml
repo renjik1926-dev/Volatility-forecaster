@@ -1,0 +1,13 @@
+# Dependency PRs must pass the golden-output tests. If an upgrade changes any model's output,
+# merge it only together with a new model version (§11, §17).
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,0 +1,126 @@
+# The evening job (§14): run-daily, push raw data to the private repo FIRST, privacy check,
+# commit public outputs to the append-only `forecasts` branch, deploy the site, ping heartbeat.
+# The deploy lives here because pushes made with GITHUB_TOKEN don't start other workflows.
+name: daily
+
+on:
+  schedule:
+    - cron: "37 23 * * 1-5" # primary: 7:37 p.m. EDT / 6:37 p.m. EST, Mon–Fri
+    - cron: "37 3 * * 2-6" # backup: 03:37 UTC the next calendar day
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: forecasts-branch # shared with proofs.yml and backtest.yml
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60 # up to 30 minutes waiting for a late bar, plus the run
+    permissions:
+      contents: write # push to the forecasts branch only (main is PR-protected)
+    outputs:
+      publish: ${{ steps.run.outputs.publish }}
+    steps:
+      - name: Check out code (main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out the forecasts branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: forecasts
+          path: forecasts
+
+      - name: Check out the private data repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/volforecast-data
+          ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
+          path: data-private
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      - name: Install
+        run: uv sync --frozen --no-dev --extra proofs
+
+      - name: Run the evening job
+        id: run
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          VOLFORECAST_PUBLIC_DIR: forecasts/data
+          VOLFORECAST_PRIVATE_DIR: data-private
+          VOLFORECAST_SITE_DIR: site
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          kind=manual
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            if [ "$SCHEDULE" = "37 3 * * 2-6" ]; then kind=backup; else kind=primary; fi
+          fi
+          uv run --no-sync volforecast run-daily --run-kind "$kind" --github-output "$GITHUB_OUTPUT"
+
+      - name: Push raw data to the private repo (before anything is published)
+        id: private_push
+        if: always()
+        working-directory: data-private
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "data: run $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
+
+      - name: Privacy check (pre-publish)
+        id: privacy
+        if: always() && steps.private_push.outcome == 'success'
+        run: uv run --no-sync volforecast privacy-check forecasts/data site
+
+      - name: Commit public outputs to the forecasts branch
+        if: always() && steps.private_push.outcome == 'success' && steps.privacy.outcome == 'success'
+        working-directory: forecasts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if ! git diff --cached --quiet; then
+            git commit -m "forecasts: run $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin HEAD:forecasts
+          fi
+
+      - name: Upload the site
+        if: steps.run.outputs.publish == 'true' && steps.privacy.outcome == 'success'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    needs: run
+    if: needs.run.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      - name: Ping the heartbeat monitor
+        env:
+          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
+        run: |
+          if [ -n "$HEARTBEAT_URL" ]; then
+            curl -fsS -m 10 --retry 3 -o /dev/null "$HEARTBEAT_URL"
+          fi
