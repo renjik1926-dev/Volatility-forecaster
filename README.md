@@ -43,7 +43,7 @@ The **live record** is the headline: QLIKE loss with bootstrap intervals, skill 
 
 The **backtest** comes second. It runs on about 10 years of the S&P 500 index from FRED, labeled everywhere as "S&P 500 index, closing prices, no dividends: a stand-in for SPY". It has a fixed study period (through 2021) and an out-of-sample period (2022 on) that is scored once, after every modeling choice is frozen.
 
-Live scoreboard: https://renjik1926-dev.github.io/volatility-forecaster/ (goes live after the first successful evening run)
+Live scoreboard: https://renjik1926-dev.github.io/Volatility-forecaster/ (goes live after the first successful evening run)
 
 ## Data and licensing
 
