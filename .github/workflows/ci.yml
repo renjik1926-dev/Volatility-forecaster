@@ -51,8 +51,11 @@ jobs:
             --now 2026-10-16T23:37:00+00:00 --no-proofs
           uv run --no-sync volforecast privacy-check "$VOLFORECAST_PUBLIC_DIR" "$VOLFORECAST_SITE_DIR"
 
-      - name: Audit dependencies
-        run: uv run --no-sync pip-audit --skip-editable --strict
+      - name: Audit dependencies (the exact locked versions, with hashes)
+        run: |
+          uv export --frozen --no-emit-project --all-extras -q -o "$RUNNER_TEMP/requirements-audit.txt"
+          uv run --no-sync pip-audit -r "$RUNNER_TEMP/requirements-audit.txt" \
+            --require-hashes --disable-pip --strict
 
   actionlint:
     runs-on: ubuntu-24.04
