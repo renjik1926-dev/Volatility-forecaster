@@ -24,6 +24,10 @@ MAX_ABS_RETURN = 0.25  # validation threshold for a single day's return (§10.3)
 STUDY_END = dt.date(2021, 12, 31)
 OOS_START = dt.date(2022, 1, 1)
 
+# Models changed after the out-of-sample period was first scored (2026-10-19). Their 2022-on
+# backtest results are not a clean holdout, and the site labels them so. model -> new version.
+POST_HOLDOUT_REVISIONS: dict[str, int] = {"vix_mz": 2, "har_log": 2, "ensemble": 2}
+
 
 def _read_dotenv(path: Path) -> dict[str, str]:
     """Parse KEY=VALUE lines. Comments and blank lines are skipped; quotes are stripped."""

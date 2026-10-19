@@ -1,15 +1,17 @@
 """VIX models for SPY (§3, §11).
 
 `vix`: h = (VIXₜ/100)² · (30/365) / Nₜ, prepared in `ModelData.vix_var`.
-`vix_mz`: VIX recalibrated by a rolling regression of past proxies on past VIX variance,
-v̂ₛ₊₁ = a + b·h_VIX,ₛ, which removes the usual gap between implied and realized volatility.
+`vix_mz` (version 2): the VIX rescaled to remove the usual gap between implied and realized
+variance, h = c · h_VIX with c = mean(v̂ₛ₊₁ / h_VIX,ₛ) over the rolling window. That c is the
+scale that minimizes QLIKE, so the forecast is always positive. Version 1 used a linear
+regression a + b·h_VIX, which could predict variances at or below zero on squared-return
+proxies (S&P 500 study period: mean QLIKE 609); see METHODOLOGY.md, "Revisions".
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-from volforecast.config import PROXY_FLOOR
 from volforecast.models.base import (
     FitError,
     Model,
@@ -40,33 +42,26 @@ class Vix(Model):
 
 class VixMZ(Model):
     name = "vix_mz"
+    version = 2
     min_history = 100
     needs_vix = True
 
     def fit(self, data: ModelData) -> Params:
         assert data.vix_var is not None
         x, y = data.vix_var[:-1], data.proxy[1:]
-        ok = np.isfinite(x) & np.isfinite(y)
+        ok = np.isfinite(x) & np.isfinite(y) & (x > 0)
         if ok.sum() < 60:
             raise FitError("vix_mz: fewer than 60 usable pairs")
-        design = np.column_stack([np.ones(ok.sum()), x[ok]])
-        (a, b), *_ = np.linalg.lstsq(design, y[ok], rcond=None)
-        if not (np.isfinite(a) and np.isfinite(b)) or b <= 0:
-            raise FitError("vix_mz: slope is not positive")
-        return {"a": float(a), "b": float(b)}
+        scale = float(np.mean(y[ok] / x[ok]))
+        if not (np.isfinite(scale) and scale > 0):
+            raise FitError("vix_mz: scale is not positive")
+        return {"scale": scale}
 
     def predict(self, data: ModelData, params: Params) -> list[Prediction]:
         assert data.vix_var is not None
         h_vix = float(data.vix_var[-1])
         if not np.isfinite(h_vix):
             raise FitError("vix_mz: no VIX value on or before the forecast date")
-        value = params["a"] + params["b"] * h_vix
-        notes = []
-        if value <= PROXY_FLOOR:
-            value = PROXY_FLOOR
-            notes.append("floored")
-        if data.meta.get("vix_date"):
-            notes.append(f"vix_date={data.meta['vix_date']}")
-        return [
-            Prediction(self.name, check_variance(value, self.name), "normal", notes=";".join(notes))
-        ]
+        value = params["scale"] * h_vix
+        notes = f"vix_date={data.meta['vix_date']}" if data.meta.get("vix_date") else ""
+        return [Prediction(self.name, check_variance(value, self.name), "normal", notes=notes)]

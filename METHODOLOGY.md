@@ -46,6 +46,20 @@ So shrinkage helps most when history is short, which is exactly when `garch_t_sh
 
 Each model has a version (`garch_t@1`). Any change that could alter outputs creates a new version, which starts its own live record. That includes formula, window or distribution changes, and dependency upgrades that change results. The golden-output test (`tests/fixtures/golden/forecasts.json`) catches such changes. Regenerate it with `scripts/update_golden.py` only together with a version bump.
 
+### Revisions
+
+**2026-10-19: `vix_mz@2`, `har_log@2`, `ensemble@2`.** These were changed after the S&P 500 out-of-sample period (2022 on) was scored for the first time. Both problems were already visible in the study period. Each fix follows from theory, and the new versions were checked on study-period data only before being published. Even so, their out-of-sample results are **not a clean holdout**, and the site labels them "revised after holdout". The original version-1 results remain in the `forecasts` branch history.
+
+- **`vix_mz`**
+  - *v1:* a linear regression v̂ₛ₊₁ = a + b·h_VIX,ₛ. It can predict variances at or below zero, which get floored, so the losses explode (study-period mean QLIKE 609).
+  - *v2:* h = c·h_VIX with c = mean(v̂ₛ₊₁ / h_VIX,ₛ) over the window. That c is the scale that minimizes QLIKE, the primary loss, so the forecast is always positive (study QLIKE 1.607).
+- **`har_log`**
+  - *v1:* converted log forecasts back with the log-normal factor exp(s²/2). The log of a squared return is heavily left-skewed, not normal, so this inflated variance about threefold. On simulated squared returns with constant variance, v1 forecast 2.5× the true variance and v2 0.96×. In the study period, 95% VaR was breached on only 2.0% of days, and mean QLIKE was 2.13.
+  - *v2:* uses Duan's (1983) smearing estimator, exp(ŷ)·mean(exp(ε̂)), which assumes no distribution (study QLIKE 1.888; 95% breaches 5.8%).
+- **`ensemble`**: it averages `har_log`, so it moves to version 2 with it (study QLIKE 1.621, was 1.682).
+
+`har_log` remains the weakest model on squared-return proxies. HAR was designed for intraday realized variance, and daily squared returns are a much noisier input. Live, it uses the range-based proxy.
+
 ## Evaluation
 
 - **Losses:** mean QLIKE and MSE with stationary-bootstrap 95% intervals (fixed seed).

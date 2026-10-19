@@ -22,7 +22,13 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from plotly.offline import get_plotlyjs
 
 from volforecast.calendar import TradingCalendar
-from volforecast.config import OOS_START, STUDY_END, TICKERS, TRADING_DAYS_PER_YEAR
+from volforecast.config import (
+    OOS_START,
+    POST_HOLDOUT_REVISIONS,
+    STUDY_END,
+    TICKERS,
+    TRADING_DAYS_PER_YEAR,
+)
 from volforecast.evaluate import BASELINE, loss_table, var_table
 from volforecast.store import (
     NUMERIC_FORECAST,
@@ -236,7 +242,15 @@ def backtest_sections(bt: pd.DataFrame) -> list[dict[str, Any]]:
         return []
     oos = bt[bt["target_date"] >= OOS_START.isoformat()].assign(ticker=OOS_LABEL)
     study = bt[bt["target_date"] <= STUDY_END.isoformat()].assign(ticker=STUDY_LABEL)
-    return scoreboard(pd.concat([oos, study], ignore_index=True), [OOS_LABEL, STUDY_LABEL])
+    sections = scoreboard(pd.concat([oos, study], ignore_index=True), [OOS_LABEL, STUDY_LABEL])
+    # Models changed after the holdout was first scored can't claim a clean out-of-sample result.
+    for section in sections:
+        if section["ticker"] != OOS_LABEL:
+            continue
+        for row in section["loss"]:
+            if row["model"] in POST_HOLDOUT_REVISIONS:
+                row["label"] = "revised after holdout"
+    return sections
 
 
 # --- charts -------------------------------------------------------------------------------------
@@ -383,6 +397,7 @@ def build_site(
             sections=backtest_sections(bt),
             rolling=rolling_qlike_chart(bt, "S&P 500 index backtest") if not bt.empty else None,
             short_history=data.short_history.to_dict("records"),
+            revisions=[f"{m} (version {v})" for m, v in POST_HOLDOUT_REVISIONS.items()],
             **common,
         ),
         "methodology.html": env.get_template("methodology.html").render(

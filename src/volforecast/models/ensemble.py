@@ -17,6 +17,7 @@ MIN_MEMBERS = 2
 
 class Ensemble(Model):
     name = "ensemble"
+    version = 2  # version 2: its member har_log changed to version 2
     min_history = 150
 
     def predict(self, data: ModelData, params: Params) -> list[Prediction]:

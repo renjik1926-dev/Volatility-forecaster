@@ -3,6 +3,9 @@
 {% block content %}
 <h1>Historical backtest</h1>
 <p class="lede"><strong>{{ label }}.</strong> This is a walk-forward backtest, not the live record; the live scoreboard is the headline result. Squared returns are the volatility proxy here, because the index series has closing values only. The study period (through 2021) was used for modeling choices; the out-of-sample period (2022 on) was scored once after every choice was frozen, so it comes first and is the clean test.</p>
+{% if revisions and sections %}
+<p class="note"><strong>Revised after the holdout:</strong> {{ revisions | join(", ") }} were changed after the out-of-sample period was first scored, to fix problems that were already visible in the study period. Their out-of-sample rows are labeled “revised after holdout” and are not a clean test. See the methodology for details.</p>
+{% endif %}
 {% if not sections %}
 <p>The backtest hasn't been published yet.</p>
 {% endif %}

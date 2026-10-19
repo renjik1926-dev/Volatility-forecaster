@@ -24,7 +24,7 @@ from volforecast.models.garch_sh import (
     to_natural,
 )
 from volforecast.models.har import HarLog, har_features
-from volforecast.models.vix import vix_to_variance
+from volforecast.models.vix import VixMZ, vix_to_variance
 from volforecast.synthetic import simulate_garch_returns
 
 
@@ -67,7 +67,42 @@ def test_har_recovers_a_known_linear_relation() -> None:
         log_v[t + 1] = -1.0 + 0.4 * log_v[t] + 0.3 * w + 0.2 * m + rng.normal(0, 0.3)
     params = HarLog().fit(make_data(np.zeros(600), np.exp(log_v)))
     assert params["bd"] == pytest.approx(0.4, abs=0.12)
-    assert params["s2"] == pytest.approx(0.09, rel=0.2)
+    # With normal residuals (sd 0.3), smearing matches the log-normal factor exp(0.09 / 2).
+    assert params["smear"] == pytest.approx(np.exp(0.045), rel=0.03)
+
+
+def test_har_smearing_is_unbiased_for_squared_returns() -> None:
+    """On squared returns the log residuals are far from normal; the forecast level must still
+    match the average proxy (version 1 overshot it about threefold)."""
+    rng = np.random.default_rng(8)
+    true_var = 1e-4
+    proxy = true_var * rng.chisquare(1, 1500)  # squared returns with constant variance
+    model = HarLog()
+    data = make_data(np.zeros(1500), proxy)
+    forecast = model.predict(data, model.fit(data))[0].variance
+    assert forecast == pytest.approx(true_var, rel=0.25)
+
+
+def test_vix_mz_scales_the_vix_and_stays_positive() -> None:
+    rng = np.random.default_rng(9)
+    n = 300
+    vix_var = rng.uniform(5e-5, 3e-4, n)
+    proxy = np.empty(n)
+    proxy[0] = 1e-4
+    proxy[1:] = 0.7 * vix_var[:-1] * rng.chisquare(1, n - 1)  # realized ≈ 70% of implied
+    start = np.datetime64("2020-01-01", "D")
+    data = ModelData(
+        dates=np.arange(start, start + np.timedelta64(n, "D")),
+        r=np.zeros(n),
+        proxy=proxy,
+        vix_var=vix_var,
+    )
+    model = VixMZ()
+    params = model.fit(data)
+    assert params["scale"] == pytest.approx(0.7, rel=0.2)
+    pred = model.predict(data, params)[0]
+    assert pred.variance == pytest.approx(params["scale"] * vix_var[-1])
+    assert pred.variance > 0
 
 
 def test_vix_conversion() -> None:

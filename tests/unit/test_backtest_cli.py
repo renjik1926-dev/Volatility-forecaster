@@ -127,3 +127,28 @@ def test_site_shows_stale_banner_and_empty_states(
     assert "No forecasts yet" in index and "Stale" in index
     assert "not investment advice" in index
     assert scan([tmp_path / "site"]) == []
+
+
+def test_backtest_page_flags_models_revised_after_the_holdout() -> None:
+    from volforecast.site.build import OOS_LABEL, STUDY_LABEL, backtest_sections
+
+    rng = np.random.default_rng(5)
+    rows = []
+    for day in pd.bdate_range("2021-10-01", "2022-03-31"):
+        for model in ("ewma_094", "vix_mz"):
+            rows.append(
+                {
+                    "ticker": "SPX",
+                    "model": model,
+                    "target_date": day.date().isoformat(),
+                    "qlike": float(rng.gamma(2.0, 0.5)),
+                    "viol95": 0.0,
+                    "viol99": 0.0,
+                }
+            )
+    sections = {s["ticker"]: s for s in backtest_sections(pd.DataFrame(rows))}
+    oos = {r["model"]: r["label"] for r in sections[OOS_LABEL]["loss"]}
+    study = {r["model"]: r["label"] for r in sections[STUDY_LABEL]["loss"]}
+    assert oos["vix_mz"] == "revised after holdout"
+    assert oos["ewma_094"] != "revised after holdout"
+    assert study["vix_mz"] != "revised after holdout"
