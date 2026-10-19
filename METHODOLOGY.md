@@ -20,8 +20,25 @@ Plain maximum-likelihood GARCH is unreliable with a few hundred observations; pe
 - **Variance targeting:** ω = σ̄²(1 − α − β), with σ̄² the mean squared return in the window.
 - **Parameterization:** p = α + β, a = α/p, ν > 2. Normal priors on logit p, logit a and ln(ν − 2).
 - **Prior centers:** p₀ = 0.97, α₀ = 0.08 (β₀ = 0.89), ν₀ = 7. These were fixed before any backtest.
-- **Prior strength.** One number, n₀ (`prior_sessions`). Prior precision is n₀ times the per-observation Fisher information at the prior centers. That information is estimated by simulation in `scripts/unit_information.py` and hard-coded as `UNIT_INFORMATION`. At n = n₀ sessions, the data and the prior carry about equal information. The default n₀ = 250 is a placeholder until it is tuned on the study period (`volforecast backtest --tune`) and frozen.
+- **Prior strength.** One number, n₀ (`prior_sessions`). Prior precision is n₀ times the per-observation Fisher information at the prior centers. That information is estimated by simulation in `scripts/unit_information.py` and hard-coded as `UNIT_INFORMATION`. At n = n₀ sessions, the data and the prior carry about equal information. n₀ = 250, tuned on the study period and frozen (below).
 - **Checks (tests):** with n₀ = 0 the estimates match `arch`'s maximum likelihood; with a huge n₀ they equal the prior centers; as the sample grows they move to the truth.
+
+### Prior strength tuning (study period only, frozen 2026-10-19)
+
+`volforecast backtest --tune` ran a walk-forward on the S&P 500 index study period only (FRED `SP500`, 2016-10-17 to 2021-12-31; closing prices, no dividends; a stand-in for SPY). It used a 250-session window, re-estimated every 21 sessions, and scored 1,060 forecasts with QLIKE on squared returns. No out-of-sample data was read.
+
+| n₀ | 0 (plain ML) | 50 | 100 | **250** | 500 | 1000 |
+|---|---|---|---|---|---|---|
+| Mean QLIKE | 1.636 | 1.601 | 1.595 | **1.591** | 1.591 | 1.594 |
+
+The procedure picks the lowest mean QLIKE, so n₀ = 250 is frozen.
+
+A follow-up sensitivity check used the same study data, starting later (810 forecasts):
+- **100-session window:** n₀ = 100 was slightly better than 250, and both beat plain maximum likelihood.
+- **250- and 500-session windows:** plain maximum likelihood was slightly better.
+- **Significance:** none of the differences between 0, 100 and 250 were significant. Diebold–Mariano p-values for 250 vs 0 were 0.20, 0.88 and 0.79.
+
+So shrinkage helps most when history is short, which is exactly when `garch_t_sh` matters, and fades as history grows. The value from the pre-specified procedure was kept rather than re-picked after seeing the sensitivity results.
 
 **TODO before v0.1.0:** cite checked sources for the prior centers, i.e. published daily equity-index GARCH(1,1)-t estimates. Do not cite a paper for a specific number without checking it.
 

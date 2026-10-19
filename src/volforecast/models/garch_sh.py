@@ -40,7 +40,9 @@ P0, ALPHA0, NU0 = 0.97, 0.08, 7.0
 # Per-observation Fisher information for (logit p, logit a, ln(ν−2)) at the prior centers,
 # estimated by simulation (scripts/unit_information.py, seed 20261018, 400k sessions).
 UNIT_INFORMATION = np.array([0.0074, 0.0213, 0.0157])
-DEFAULT_PRIOR_SESSIONS = 250.0  # placeholder until tuned on the study period (§13)
+# Frozen 2026-10-19 after `volforecast backtest --tune` on the S&P 500 study period only
+# (2016-10-17 to 2021-12-31): 250 had the lowest mean QLIKE (see METHODOLOGY.md).
+DEFAULT_PRIOR_SESSIONS = 250.0
 BOUNDS = [(-8.0, 12.0), (-10.0, 6.0), (-4.0, 6.0)]
 
 
