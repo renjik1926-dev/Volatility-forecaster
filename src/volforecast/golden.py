@@ -16,7 +16,10 @@ from volforecast.models import all_models
 from volforecast.synthetic import simulate, simulate_vix
 
 HISTORY_LENGTHS = (60, 160, 620)
-# Closed-form models must match exactly (up to float noise); optimizer-based ones within 1e-6.
+# Closed-form models must match to 1e-12. Optimizer-based models are compared at 1e-4: their
+# results differ by about 1e-6 between operating systems (e.g. EGARCH on Windows vs the Linux
+# CI runner), while a real model change moves them by far more than 1e-4.
+OPTIMIZER_RTOL = 1e-4
 OPTIMIZER_MODELS = frozenset(
     {"garch_t_sh", "garch_n", "garch_t", "garch_t_fhs", "gjr_t", "egarch_t", "ensemble"}
 )

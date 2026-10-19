@@ -11,7 +11,7 @@ from tests.conftest import FIXTURES
 from volforecast.calendar import TradingCalendar
 from volforecast.estimators import daily_frame
 from volforecast.forecast import ModelState, build_model_data, forecast_next
-from volforecast.golden import OPTIMIZER_MODELS, golden_forecasts
+from volforecast.golden import OPTIMIZER_MODELS, OPTIMIZER_RTOL, golden_forecasts
 from volforecast.models import all_models
 from volforecast.synthetic import simulate_vix
 
@@ -27,7 +27,7 @@ def test_golden_outputs_unchanged() -> None:
         for model, want in models.items():
             got = actual[n][model]
             assert got["version"] == want["version"] and got["fit_status"] == want["fit_status"]
-            rel = 1e-6 if model in OPTIMIZER_MODELS else 1e-12
+            rel = OPTIMIZER_RTOL if model in OPTIMIZER_MODELS else 1e-12
             for key in ("variance", "var95", "var99"):
                 if want[key] is None:
                     assert got[key] is None, (n, model, key)
