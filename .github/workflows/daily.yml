@@ -67,7 +67,9 @@ jobs:
 
       - name: Push raw data to the private repo (before anything is published)
         id: private_push
-        if: always()
+        # Runs even if the evening job failed (it may have stored bars or used API calls),
+        # but not when the job never started, e.g. because a checkout failed.
+        if: always() && steps.run.outcome != 'skipped'
         working-directory: data-private
         run: |
           git config user.name "github-actions[bot]"
