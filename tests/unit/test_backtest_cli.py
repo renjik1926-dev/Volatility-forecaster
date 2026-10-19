@@ -88,9 +88,9 @@ def test_cli_run_daily_on_recorded_responses(cli_env: Path) -> None:
     assert "status=ok" in out_file.read_text() and "publish=true" in out_file.read_text()
     assert (cli_env / "site" / "index.html").is_file()
     assert scan([cli_env / "data", cli_env / "site"]) == []
-    # Fridays aren't the first session of the week, so only the five daily series were read.
+    # Five daily series, plus dividends and splits for five tickers on this first run.
     budget = (cli_env / "private" / "budget.json").read_text()
-    assert '"2026-10-16": 5' in budget
+    assert '"2026-10-16": 15' in budget
 
     again = runner.invoke(
         app,

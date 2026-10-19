@@ -86,6 +86,9 @@ def test_first_two_evenings(world: World) -> None:
     spy = forecasts[forecasts["ticker"] == "SPY"].set_index("model")
     assert spy.loc["garch_t_sh", "fit_status"] == "ok"
     assert spy.loc["garch_t", "fit_status"] == "warming_up"
+    # The first run fetches VIX back to the start of the price history, so vix_mz has enough
+    # past pairs to fit on day one.
+    assert spy.loc["vix_mz", "fit_status"] == "ok", spy.loc["vix_mz", "notes"]
     assert "vix" in spy.index and "vix" not in set(forecasts[forecasts["ticker"] == "QQQ"]["model"])
     assert ots.stamped == [world.public.proofs_dir / "2026-10-12.csv"]
 
@@ -136,6 +139,15 @@ def test_corporate_actions_refresh_only_on_the_first_session_of_the_week(world: 
     evening(world, TUE)
     assert not [c for c in world.provider.calls if c.startswith(("DIVIDENDS", "SPLITS"))]
     assert world.budget.used_today() <= 15
+
+
+def test_first_run_mid_week_fetches_corporate_actions_once(world: World) -> None:
+    evening(world, WED)  # the very first run, and not the first session of the week
+    first = [c for c in world.provider.calls if c.startswith(("DIVIDENDS", "SPLITS"))]
+    assert len(first) == 10
+    world.provider.calls.clear()
+    evening(world, THU)
+    assert not [c for c in world.provider.calls if c.startswith(("DIVIDENDS", "SPLITS"))]
 
 
 def test_budget_guard_stops_the_run(world: World) -> None:

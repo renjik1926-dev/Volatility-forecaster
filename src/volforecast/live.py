@@ -284,8 +284,19 @@ def forecast_rows(
 def _load_vix(ctx: LiveContext, session: dt.date, notes: list[str]) -> pd.Series | None:
     if ctx.vix is None:
         return ctx.private.series("vix") if not ctx.private.series("vix").empty else None
+    # Normally the last 45 days are enough to pick up new and revised values. If the stored VIX
+    # doesn't reach back to the start of SPY's price history (e.g. on the first run), fetch
+    # from there, so vix_mz has as many past pairs as the prices allow. FRED calls are free.
+    start = session - dt.timedelta(days=45)
+    spy = ctx.private.bars(VIX_TICKER)
+    stored_before = ctx.private.series("vix").dropna()
+    if len(spy):
+        first_bar = spy["date"].iloc[0].date()
+        # A week of slack, so a holiday at the start doesn't trigger a full refetch every run.
+        if stored_before.empty or stored_before.index[0].date() > first_bar + dt.timedelta(days=7):
+            start = min(start, first_bar)
     try:
-        fresh = ctx.vix.series("VIXCLS", start=session - dt.timedelta(days=45))
+        fresh = ctx.vix.series("VIXCLS", start=start)
         stored = ctx.private.merge_series("vix", fresh)
     except ProviderError as exc:
         notes.append(f"vix: {exc}")
@@ -338,12 +349,14 @@ def _run(ctx: LiveContext, session: dt.date, result: RunResult) -> None:
         raise StopRun(ALREADY_DONE, f"session {session} already processed")
     tickers = list(ctx.settings.tickers)
 
-    # Step 2: fetch only what's missing; corporate actions weekly, primary run only.
+    # Step 2: fetch only what's missing. Corporate actions refresh weekly on the primary run,
+    # and right away for a ticker whose dividends and splits were never fetched (first run).
     missing = fetch_missing(ctx, session, tickers)
-    if ctx.run_kind != "backup" and ctx.calendar.is_first_session_of_week(session):
-        for ticker in tickers:
-            if ctx.private.actions_refreshed_on(ticker) != session:
-                refresh_actions(ctx, ticker, session)
+    weekly = ctx.run_kind != "backup" and ctx.calendar.is_first_session_of_week(session)
+    for ticker in tickers:
+        refreshed = ctx.private.actions_refreshed_on(ticker)
+        if refreshed is None or (weekly and refreshed != session):
+            refresh_actions(ctx, ticker, session)
     waited = 0.0
     while missing and waited < ctx.settings.data_wait_minutes:
         step = min(ctx.retry_minutes, ctx.settings.data_wait_minutes - waited)
