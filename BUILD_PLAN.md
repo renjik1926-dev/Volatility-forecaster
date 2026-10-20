@@ -1,6 +1,6 @@
 # Volatility & Risk Forecaster — Build Plan
 
-**Status:** Plan v1.6 — 2026-10-18; v1.0 plus review passes, the no-full-history update, a production pass and a full re-read (change notes in §23). API keys are in the local `.env` (git-ignored).
+**Status:** Plan v1.6 — 2026-9-05; v1.0 plus review passes, the no-full-history update, a production pass and a full re-read (change notes in §23). API keys are in the local `.env` (git-ignored).
 **Goal:** A public, open-source Python bot that every trading evening forecasts tomorrow's volatility and 1-day Value-at-Risk (VaR) for a few ETFs, publishes the forecasts before the market opens, scores them the next evening, and keeps an honest, permanent track record — proving rigorous statistics and reliable engineering.
 
 **What it is not:** not a trading bot, not a price predictor, not investment advice. It never places trades and never says "buy" or "sell".
