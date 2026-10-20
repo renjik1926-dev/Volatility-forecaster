@@ -26,6 +26,8 @@
 | Repeated `fallback` fits (`health` flags 2+ in a row) | Model instability, e.g. an extreme market day | Check `params/` in the private repo. If it persists, release a new model version. |
 | Workflow shows "disabled" | 60-day inactivity rule | Re-enable it in the Actions tab and find out why the job stopped. |
 | Private-repo push fails | Deploy key removed or repo renamed | Re-add the deploy key. The job refuses to publish forecasts until this works. |
+| `Error loading key "(stdin)"` in the private-repo push step | `DATA_REPO_DEPLOY_KEY` holds the `.pub` half, or lost its line breaks when pasted | Paste the whole private key file again, from `-----BEGIN` to `-----END` lines inclusive. |
+| Privacy check flags a file type "isn't on the privacy allowlist" | A code change publishes a new kind of file | If it can't hold raw data, add it to `privacy.py` (`SAFE_SUFFIXES` or `SAFE_NAMES`); otherwise fix the code. |
 | A holiday is missing from the calendar | Calendar package not yet updated | Add the date to `data/no_session.csv`; upgrade `exchange_calendars`. |
 | Forecast committed after the open | Run delayed | Nothing to fix: it is marked `on_time = false` and excluded. |
 | `budget_exhausted` | Retries or manual runs used up the day's calls | Wait for tomorrow; check `runs.csv` and `budget.json` for what used the calls. |

@@ -44,10 +44,17 @@ def parse_observations(payload: Any) -> pd.Series:
         raise ProviderError("FRED: no 'observations' list")
     dates, values = [], []
     for obs in observations:
-        day = pd.Timestamp(obs["date"])
-        raw = obs.get("value", ".")
-        values.append(np.nan if raw in (".", "", None) else float(raw))
+        # A changed or broken format is a provider error the evening job reports, not a crash.
+        try:
+            day = pd.Timestamp(obs["date"])
+            raw = obs.get("value", ".")
+            value = np.nan if raw in (".", "", None) else float(raw)
+        except (KeyError, TypeError, ValueError, AttributeError) as exc:
+            raise ProviderError(f"FRED: malformed observation ({type(exc).__name__})") from None
+        if pd.isna(day):
+            raise ProviderError("FRED: observation without a date")
         dates.append(day)
+        values.append(value)
     index = pd.DatetimeIndex(dates, name="date").astype("datetime64[ns]")
     return pd.Series(values, index=index, dtype="float64").sort_index()
 

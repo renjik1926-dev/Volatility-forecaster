@@ -135,6 +135,20 @@ def test_fred_parses_missing_values_and_errors() -> None:
         parse_observations({"error_code": 400, "error_message": "api_key is not registered"})
 
 
+@pytest.mark.parametrize(
+    "observation",
+    [
+        {"value": "20.1"},
+        {"date": "not a date", "value": "20.1"},
+        {"date": "2026-10-16", "value": "n/a"},
+        "2026-10-16",
+    ],
+)
+def test_fred_malformed_observation_is_a_provider_error(observation: object) -> None:
+    with pytest.raises(ProviderError, match="FRED"):
+        parse_observations({"observations": [observation]})
+
+
 def test_fred_client_over_mock_transport() -> None:
     body = {
         "observations": [

@@ -29,11 +29,14 @@ jobs:
         with:
           persist-credentials: false
 
+      # No checkout keeps its credentials: the evening job runs the project's code and its
+      # dependencies, so the write token and the deploy key are handed only to the push steps.
       - name: Check out the forecasts branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: forecasts
           path: forecasts
+          persist-credentials: false
 
       - name: Check out the private data repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,6 +44,7 @@ jobs:
           repository: ${{ github.repository_owner }}/volforecast-data
           ssh-key: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
           path: data-private
+          persist-credentials: false
 
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -71,13 +75,25 @@ jobs:
         # but not when the job never started, e.g. because a checkout failed.
         if: always() && steps.run.outcome != 'skipped'
         working-directory: data-private
+        env:
+          DEPLOY_KEY: ${{ secrets.DATA_REPO_DEPLOY_KEY }}
+          # github.com's SSH host keys, from https://api.github.com/meta (SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
+          # and SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM)
+          KNOWN_HOSTS: |
+            github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+            github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --cached --quiet; then
             git commit -m "data: run $(date -u +%Y-%m-%dT%H:%MZ)"
-            git push
+            # The deploy key lives in an ssh-agent for this step only; it is never written to disk.
+            eval "$(ssh-agent -s)" > /dev/null
+            trap 'ssh-agent -k > /dev/null' EXIT
+            printf '%s\n' "$DEPLOY_KEY" | ssh-add -q -
+            printf '%s' "$KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=$RUNNER_TEMP/known_hosts -o StrictHostKeyChecking=yes" git push
           fi
 
       - name: Privacy check (pre-publish)
@@ -88,13 +104,18 @@ jobs:
       - name: Commit public outputs to the forecasts branch
         if: always() && steps.private_push.outcome == 'success' && steps.privacy.outcome == 'success'
         working-directory: forecasts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data
           if ! git diff --cached --quiet; then
             git commit -m "forecasts: run $(date -u +%Y-%m-%dT%H:%MZ)"
-            git push origin HEAD:forecasts
+            # The write token is passed to this one push, the way actions/checkout would have stored it.
+            auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            echo "::add-mask::$auth"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:forecasts
           fi
 
       - name: Upload the site

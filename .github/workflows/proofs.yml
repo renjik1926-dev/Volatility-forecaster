@@ -23,10 +23,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The write token isn't kept by the checkout while the proof code runs; only the push gets it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: forecasts
           path: forecasts
+          persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
       - run: uv sync --frozen --no-dev --extra proofs
 
@@ -37,13 +39,17 @@ jobs:
 
       - name: Commit completed proofs
         working-directory: forecasts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/proofs
           if ! git diff --cached --quiet; then
             git commit -m "proofs: upgrade $(date -u +%Y-%m-%d)"
-            git push origin HEAD:forecasts
+            auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            echo "::add-mask::$auth"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:forecasts
           fi
 
       - name: Verify every forecast is covered by a stamped file

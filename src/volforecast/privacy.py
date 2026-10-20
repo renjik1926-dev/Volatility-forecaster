@@ -44,6 +44,12 @@ FORBIDDEN = frozenset(
     }
 )
 FORBIDDEN_SUFFIXES = (".parquet", ".feather", ".pkl", ".pickle")
+# Everything published must be a type this scanner reads (csv, json, html) or one known to hold no
+# data. Any other type fails, so a new output format can't publish raw data unchecked: add it here
+# once it's known to be safe.
+SAFE_SUFFIXES = (".ots", ".md", ".css")  # timestamp proofs, docs, the site's stylesheet
+SAFE_NAMES = frozenset({".gitkeep", ".nojekyll", "plotly.min.js"})
+SAFE_ENDINGS = (".ots.bak",)  # `ots upgrade` keeps the previous proof as a backup
 TH_RE = re.compile(r"<th[^>]*>(.*?)</th>", re.IGNORECASE | re.DOTALL)
 TAG_RE = re.compile(r"<[^>]+>")
 CHART_RE = re.compile(r"<script[^>]*data-volforecast-chart[^>]*>(.*?)</script>", re.DOTALL)
@@ -107,7 +113,15 @@ def scan_file(path: Path) -> list[Finding]:
                 continue
             findings += _check_names(path, spec.get("series", []), "chart series")
         return findings
-    return []
+    if suffix in SAFE_SUFFIXES or path.name in SAFE_NAMES or path.name.endswith(SAFE_ENDINGS):
+        return []
+    return [
+        Finding(
+            path,
+            f"file type {suffix or path.name!r} isn't on the privacy allowlist "
+            "(add it to privacy.py only if it can't hold raw data)",
+        )
+    ]
 
 
 def scan(paths: Iterable[Path]) -> list[Finding]:
