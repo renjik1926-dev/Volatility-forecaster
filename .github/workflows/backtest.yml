@@ -32,10 +32,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The write token isn't kept by the checkout while the backtest code runs; only the push gets it.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: forecasts
           path: forecasts
+          persist-credentials: false
       - name: Check out the private snapshot (read-only key)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,11 +65,15 @@ jobs:
 
       - name: Commit results to the forecasts branch
         working-directory: forecasts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/backtest
           if ! git diff --cached --quiet; then
             git commit -m "backtest: $(date -u +%Y-%m-%dT%H:%MZ) (${GITHUB_SHA::7})"
-            git push origin HEAD:forecasts
+            auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            echo "::add-mask::$auth"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:forecasts
           fi

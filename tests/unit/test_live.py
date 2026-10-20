@@ -214,6 +214,20 @@ def test_privacy_scan_catches_a_raw_column(tmp_path: Path) -> None:
     assert not any(name == "ok.csv" for name, _ in findings)
 
 
+def test_privacy_scan_fails_closed_on_unknown_file_types(tmp_path: Path) -> None:
+    for name in (
+        "prices.txt",
+        "data.js",
+        "notes.md",
+        "2026-10-16.csv.ots",
+        "2026-10-16.csv.ots.bak",
+        ".gitkeep",
+    ):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+    flagged = {f.path.name for f in scan([tmp_path])}
+    assert flagged == {"prices.txt", "data.js"}
+
+
 @pytest.mark.parametrize("kind", ["primary", "backup"])
 def test_session_detection_never_uses_the_runner_date(world: World, kind: str) -> None:
     evening(world, MON)
