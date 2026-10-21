@@ -1,3 +1,4 @@
 run_id,started_utc,finished_utc,status,session_date,api_calls,notes
 20261019T034441Z-manual,2026-10-19T03:44:41+00:00,2026-10-19T03:45:36+00:00,ok,2026-10-16,5,vix: latest value is from 2026-10-15
 20261020T085110Z-backup,2026-10-20T08:51:10+00:00,2026-10-20T08:54:14+00:00,ok,2026-10-19,15,vix: latest value is from 2026-10-16
+20261021T015916Z-primary,2026-10-21T01:59:16+00:00,2026-10-21T02:00:18+00:00,ok,2026-10-20,5,vix: latest value is from 2026-10-19
