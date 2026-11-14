@@ -38,3 +38,4 @@ run_id,started_utc,finished_utc,status,session_date,api_calls,notes
 20261113T033412Z-primary,2026-11-13T03:34:12+00:00,2026-11-13T03:35:07+00:00,ok,2026-11-12,5,vix: latest value is from 2026-11-11
 20261113T112839Z-backup,2026-11-13T11:28:39+00:00,2026-11-13T11:28:39+00:00,already_done,2026-11-12,0,session 2026-11-12 already processed
 20261114T033158Z-primary,2026-11-14T03:31:58+00:00,2026-11-14T03:32:52+00:00,ok,2026-11-13,5,vix: latest value is from 2026-11-12
+20261114T105232Z-backup,2026-11-14T10:52:32+00:00,2026-11-14T10:52:32+00:00,already_done,2026-11-13,0,session 2026-11-13 already processed
